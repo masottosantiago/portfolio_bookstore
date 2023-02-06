@@ -1,0 +1,146 @@
+-- Database: bookstore
+
+-- DROP DATABASE bookstore;
+
+CREATE DATABASE bookstore
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'English_United States.1252'
+    LC_CTYPE = 'English_United States.1252'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1;
+	
+-- Table: public.books
+
+-- DROP TABLE public.books;
+
+CREATE TABLE public.books
+(
+    isbn13 bigint NOT NULL,
+    authors character varying COLLATE pg_catalog."default",
+    title character varying COLLATE pg_catalog."default",
+    type character varying COLLATE pg_catalog."default",
+    price numeric,
+    stocks integer,
+    publisher_id integer,
+    publication_date date,
+    bookid integer NOT NULL DEFAULT nextval('books_bookid_seq'::regclass),
+    CONSTRAINT books_pkey PRIMARY KEY (bookid)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.books
+    OWNER to postgres;
+
+-- Table: public.checkout
+
+-- DROP TABLE public.checkout;
+
+CREATE TABLE public.checkout
+(
+    checkout_id integer NOT NULL DEFAULT nextval('checkout_checkout_id_seq'::regclass),
+    isbn13 bigint,
+    customer_id integer,
+    transaction_id integer,
+    CONSTRAINT checkout_id PRIMARY KEY (checkout_id),
+    CONSTRAINT customer_id FOREIGN KEY (customer_id)
+        REFERENCES public.customer (customer_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT isbn13 FOREIGN KEY (isbn13)
+        REFERENCES public.books (bookid) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT transaction_id FOREIGN KEY (transaction_id)
+        REFERENCES public.transactions (transaction_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.checkout
+    OWNER to postgres;
+
+-- Table: public.customer
+
+-- DROP TABLE public.customer;
+
+CREATE TABLE public.customer
+(
+    customer_id integer NOT NULL DEFAULT nextval('customer_id_customer_id_seq'::regclass),
+    username character varying COLLATE pg_catalog."default" NOT NULL,
+    password character varying COLLATE pg_catalog."default" NOT NULL,
+    first_name character varying COLLATE pg_catalog."default" NOT NULL,
+    last_name character varying COLLATE pg_catalog."default" NOT NULL,
+    phone_no bigint NOT NULL,
+    email character varying COLLATE pg_catalog."default" NOT NULL,
+    street character varying COLLATE pg_catalog."default" NOT NULL,
+    baranggay character varying COLLATE pg_catalog."default" NOT NULL,
+    city character varying COLLATE pg_catalog."default" NOT NULL,
+    province character varying COLLATE pg_catalog."default" NOT NULL,
+    region character varying COLLATE pg_catalog."default" NOT NULL,
+    country character varying COLLATE pg_catalog."default" NOT NULL,
+    zip_code bigint NOT NULL,
+    admin boolean NOT NULL,
+    profession character varying COLLATE pg_catalog."default",
+    CONSTRAINT customer_id_pkey PRIMARY KEY (customer_id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.customer
+    OWNER to postgres;
+
+-- Table: public.publisher
+
+-- DROP TABLE public.publisher;
+
+CREATE TABLE public.publisher
+(
+    publisher_id integer NOT NULL DEFAULT nextval('publisher_publisher_id_seq'::regclass),
+    publisher_name character varying COLLATE pg_catalog."default",
+    publisher_address character varying COLLATE pg_catalog."default",
+    publisher_contact bigint,
+    publisher_email character varying COLLATE pg_catalog."default",
+    CONSTRAINT publisher_pkey PRIMARY KEY (publisher_id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.publisher
+    OWNER to postgres;
+
+-- Table: public.transactions
+
+-- DROP TABLE public.transactions;
+
+CREATE TABLE public.transactions
+(
+    transaction_id integer NOT NULL DEFAULT nextval('transaction_transaction_id_seq'::regclass),
+    group_no bigint,
+    date date,
+    "time" time without time zone,
+    customer_id bigint,
+    isbn13 bigint,
+    quantity bigint,
+    sub_total bigint,
+    CONSTRAINT transaction_pkey PRIMARY KEY (transaction_id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.transactions
+    OWNER to postgres;
+
+-- Trigger: set_timestamp
+
+-- DROP TRIGGER set_timestamp ON public.transactions;
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE 
+    ON public.transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION public.trigger_set_timestamp();
